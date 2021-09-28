@@ -18,7 +18,7 @@ function run(muts) {
 }
 
 function inFilters(ids) {
-  for(const f of filters) {
+  for (const f of filters) {
     if (
       (ids.user !== undefined && ids.user === f.user) ||
       (ids.chan !== undefined && ids.chan === f.chan)

@@ -1,13 +1,15 @@
 function generateFilter() {
-  const link = document.getElementById("uri").value;
+  const mesg = document.getElementById("gen-mesg");
+  const form = document.getElementById("uri");
+  const link = form.value;
   const match = link.match(/(?:sm|so)\d*/);
   if (match?.length === 1) {
-    const uri = `https://ext.nicovideo.jp/api/getthumbinfo/${match[0]}`;
-    console.log(uri);
+    const vid = match[0];
+    form.value = "";
+    const uri = `https://ext.nicovideo.jp/api/getthumbinfo/${vid}`;
     fetch(uri)
       .then((res) => res.text())
       .then((text) => {
-        console.log(text);
         const xml = new window.DOMParser().parseFromString(text, "text/xml");
         const userId = xml.getElementsByTagName("user_id")[0]?.textContent;
         const chanId = xml.getElementsByTagName("ch_id")[0]?.textContent;
@@ -15,13 +17,14 @@ function generateFilter() {
           user: userId,
           chan: chanId,
         };
-        document
-          .getElementById("filters")
-          .value += ("\n" + formatFilter(filter));
+        document.getElementById("filters").value += "\n" + formatFilter(filter);
+        mesg.innerText = `Generated for ${vid}`;
       })
       .catch((e) => {
-        console.log(e);
+        mesg.innerText = `Error: ${e}`;
       });
+  } else {
+    mesg.innerText = "This URI is not suitable";
   }
 }
 
@@ -78,8 +81,10 @@ function saveOptions() {
 
 function restoreOptions() {
   browser.storage.sync.get("filters").then((res) => {
-    const str = res.filters.map((f) => formatFilter(f)).join("\n");
-    document.getElementById("filters").value = str;
+    if (res.filters) {
+      const str = res.filters.map((f) => formatFilter(f)).join("\n");
+      document.getElementById("filters").value = str;
+    }
   });
 }
 

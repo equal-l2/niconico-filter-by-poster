@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "niconico-filter-by-poster",
-    "description": "block videos by poster in niconico ranking top",
-    "version": "0.0.1",
+    "description": "filter videos on niconico ranking top by user/channel",
+    "version": "0.0.3",
     "content_scripts": [
         {
             "matches": [
@@ -22,7 +22,8 @@
         "storage"
     ],
     "options_ui": {
-        "page": "options.html"
+        "page": "options.html",
+        "open_in_tab": true
     },
     "browser_specific_settings": {
         "gecko": {
