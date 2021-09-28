@@ -1,0 +1,32 @@
+{
+    "manifest_version": 2,
+    "name": "niconico-filter-by-poster",
+    "description": "block videos by poster in niconico ranking top",
+    "version": "0.0.1",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.nicovideo.jp/ranking",
+                "https://www.nicovideo.jp/ranking?*"
+            ],
+            "js": [
+                "main.js"
+            ],
+            "css": [
+                "main.css"
+            ]
+        }
+    ],
+    "permissions": [
+        "https://ext.nicovideo.jp/api/getthumbinfo/*",
+        "storage"
+    ],
+    "options_ui": {
+        "page": "options.html"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "{b27ec062-203e-11ec-9621-0242ac130002}"
+        }
+    }
+}
