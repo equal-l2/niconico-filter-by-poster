@@ -86,9 +86,13 @@ function setThumb(card) {
   thumb?.classList.add("NNFBP-blur");
 }
 
-window.onload = () => {
-  browser.storage.sync.get("filters").then((res) => {
+browser.storage.sync
+  .get("filters")
+  .then((res) => {
     filters = res.filters;
+    if (filters === undefined) {
+      filters = [];
+    }
 
     const observer = new MutationObserver(run);
 
@@ -104,5 +108,9 @@ window.onload = () => {
     }
 
     runFirst();
+
+    console.log("NNFBP enabled");
+  })
+  .catch((e) => {
+    console.log("NNFBP failed to load filter: ", e);
   });
-};
