@@ -38,6 +38,44 @@ function formatFilter(filt) {
   }
 }
 
+function uniqFilters(filters) {
+  filters.sort((a, b) => {
+    if (a.chan !== undefined) {
+      // a == "chan:*"
+      if (b.chan !== undefined) {
+        // b == "chan:*"
+        return a.chan - b.chan;
+      } else {
+        // b == "user:*"
+        return -1;
+      }
+    } else {
+      // a == "user:*"
+      if (b.user !== undefined) {
+        // b == "user:*"
+        return a.user - b.user;
+      } else {
+        // b == "chan:*"
+        return 1;
+      }
+    }
+  });
+
+  for (let i = 0; i < filters.length - 1; i++) {
+    while (true) {
+      let a = filters[i];
+      let b = filters[i + 1];
+      if (a?.user === b?.user && a?.chan === b?.chan) {
+        filters.splice(i + 1, 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  return filters;
+}
+
 function parseFilters(str) {
   const lines = str.split("\n");
   let res = {
@@ -61,6 +99,8 @@ function parseFilters(str) {
       break;
     }
   }
+
+  res.filters = uniqFilters(res.filters);
   return res;
 }
 
@@ -77,6 +117,7 @@ function saveOptions() {
       "mesg"
     ).innerText = `Error on line ${parsed.errorLine}`;
   }
+  restoreOptions();
 }
 
 function restoreOptions() {
