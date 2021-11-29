@@ -1,13 +1,15 @@
 // Put all the javascript code here, that you want to execute after page load.
 let filters;
 
-function runFirst() {
+// filter all cards
+function filterAll() {
   const cards = document.getElementsByClassName("NC-Card");
   for (const c of cards) {
     filterCard(c);
   }
 }
 
+// filter newly-added cards
 function run(muts) {
   for (const m of muts) {
     const nodes = m.addedNodes;
@@ -17,6 +19,7 @@ function run(muts) {
   }
 }
 
+// find ids in filters
 function inFilters(ids) {
   for (const f of filters) {
     if (
@@ -29,17 +32,36 @@ function inFilters(ids) {
   return false;
 }
 
+// add filter effect to the specified card
 function filterCard(card) {
   let id = getId(card);
   if (id === "") return;
   getPoster(id).then((ids) => {
     if (inFilters(ids)) {
-      setTitle(card);
-      setThumb(card);
+      // set title of card
+      {
+        const title = card.getElementsByClassName("NC-CardTitle")[0];
+        if (title?.getElementsByClassName("NNFBP-Title").length === 0) {
+          const original = `${title.innerText}`;
+          title.innerText = "";
+          const span = document.createElement("span");
+          span.innerText = "Filtered";
+          span.title = original;
+          span.classList.add("NNFBP-Title");
+          title.appendChild(span);
+        }
+      }
+
+      // add effect to thumbnail
+      {
+        const thumb = card.getElementsByClassName("NC-Card-media")[0];
+        thumb?.classList.add("NNFBP-blur");
+      }
     }
   });
 }
 
+// get id of the card
 function getId(card) {
   const link = card.getElementsByClassName("NC-Link")[0];
   const matches = link.href.match(/(?:sm|so)\d*/);
@@ -51,6 +73,7 @@ function getId(card) {
   }
 }
 
+// get poster of the movie
 async function getPoster(id) {
   let uri = `https://ext.nicovideo.jp/api/getthumbinfo/${id}`;
   try {
@@ -66,24 +89,6 @@ async function getPoster(id) {
   } catch (e) {
     console.log(e);
   }
-}
-
-function setTitle(card) {
-  const title = card.getElementsByClassName("NC-CardTitle")[0];
-  if (title?.getElementsByClassName("NNFBP-Title").length === 0) {
-    const original = `${title.innerText}`;
-    title.innerText = "";
-    const span = document.createElement("span");
-    span.innerText = "Filtered";
-    span.title = original;
-    span.classList.add("NNFBP-Title");
-    title.appendChild(span);
-  }
-}
-
-function setThumb(card) {
-  const thumb = card.getElementsByClassName("NC-Card-media")[0];
-  thumb?.classList.add("NNFBP-blur");
 }
 
 browser.storage.sync
@@ -107,7 +112,19 @@ browser.storage.sync
       row.remove();
     }
 
-    runFirst();
+    filterAll();
+
+    browser.storage.onChanged.addListener((changes, area) => {
+      console.log(changes, area)
+      if (area === "sync" && changes.filters !== undefined) {
+        browser.storage.sync
+          .get("filters")
+          .then((res) => {
+            filters = res.filters;
+            filterAll();
+          })
+      }
+    });
 
     console.log("NNFBP enabled");
   })

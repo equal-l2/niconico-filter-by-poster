@@ -17,8 +17,13 @@
             ]
         }
     ],
+    "background": {
+        "scripts": ["menus.js"]
+    },
     "permissions": [
         "https://ext.nicovideo.jp/api/getthumbinfo/*",
+        "activeTab",
+        "menus",
         "storage"
     ],
     "options_ui": {

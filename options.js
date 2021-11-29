@@ -1,33 +1,21 @@
+// generate filter for the uri specified via form
 function generateFilter() {
   const mesg = document.getElementById("gen-mesg");
   const form = document.getElementById("uri");
   const link = form.value;
-  const match = link.match(/(?:sm|so)\d*/);
-  if (match?.length === 1) {
-    const vid = match[0];
-    form.value = "";
-    const uri = `https://ext.nicovideo.jp/api/getthumbinfo/${vid}`;
-    fetch(uri)
-      .then((res) => res.text())
-      .then((text) => {
-        const xml = new window.DOMParser().parseFromString(text, "text/xml");
-        const userId = xml.getElementsByTagName("user_id")[0]?.textContent;
-        const chanId = xml.getElementsByTagName("ch_id")[0]?.textContent;
-        const filter = {
-          user: userId,
-          chan: chanId,
-        };
+  import("./utils.js").then(utils => {
+    utils.generateFilterFromURL(link).then(([vid, filter, err]) => {
+      if (err === null) {
         document.getElementById("filters").value += "\n" + formatFilter(filter);
         mesg.innerText = `Generated for ${vid}`;
-      })
-      .catch((e) => {
-        mesg.innerText = `Error: ${e}`;
-      });
-  } else {
-    mesg.innerText = "This URI is not suitable";
-  }
+      } else {
+        mesg.innerText = err;
+      }
+    })
+  })
 }
 
+// format filter object to string
 function formatFilter(filt) {
   if (filt.user) {
     return `user:${filt.user}`;
@@ -38,44 +26,7 @@ function formatFilter(filt) {
   }
 }
 
-function uniqFilters(filters) {
-  filters.sort((a, b) => {
-    if (a.chan !== undefined) {
-      // a == "chan:*"
-      if (b.chan !== undefined) {
-        // b == "chan:*"
-        return a.chan - b.chan;
-      } else {
-        // b == "user:*"
-        return -1;
-      }
-    } else {
-      // a == "user:*"
-      if (b.user !== undefined) {
-        // b == "user:*"
-        return a.user - b.user;
-      } else {
-        // b == "chan:*"
-        return 1;
-      }
-    }
-  });
-
-  for (let i = 0; i < filters.length - 1; i++) {
-    while (true) {
-      let a = filters[i];
-      let b = filters[i + 1];
-      if (a?.user === b?.user && a?.chan === b?.chan) {
-        filters.splice(i + 1, 1);
-      } else {
-        break;
-      }
-    }
-  }
-
-  return filters;
-}
-
+// parse form string into array of filter object
 function parseFilters(str) {
   const lines = str.split("\n");
   let res = {
