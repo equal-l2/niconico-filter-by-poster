@@ -115,7 +115,6 @@ browser.storage.sync
     filterAll();
 
     browser.storage.onChanged.addListener((changes, area) => {
-      console.log(changes, area)
       if (area === "sync" && changes.filters !== undefined) {
         browser.storage.sync
           .get("filters")
