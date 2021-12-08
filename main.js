@@ -94,6 +94,7 @@ async function getPoster(id) {
 browser.storage.sync
   .get("filters")
   .then((res) => {
+    console.log("NNFBP filters loaded");
     filters = res.filters;
     if (filters === undefined) {
       filters = [];
@@ -115,13 +116,10 @@ browser.storage.sync
     filterAll();
 
     browser.storage.onChanged.addListener((changes, area) => {
-      if (area === "sync" && changes.filters !== undefined) {
-        browser.storage.sync
-          .get("filters")
-          .then((res) => {
-            filters = res.filters;
-            filterAll();
-          })
+      if (area === "sync" && changes.filters?.newValue !== undefined) {
+        filters = changes.filters.newValue;
+        console.log("NNFBP filters reloaded");
+        filterAll();
       }
     });
 
