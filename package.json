@@ -1,5 +1,15 @@
 {
+  "scripts": {
+    "fix": "standard --fix"
+  },
   "standard": {
-    "globals": [ "fetch", "browser", "MutationObserver" ]
+    "globals": [
+      "fetch",
+      "browser",
+      "MutationObserver"
+    ]
+  },
+  "devDependencies": {
+    "standard": "^16.0.4"
   }
 }
