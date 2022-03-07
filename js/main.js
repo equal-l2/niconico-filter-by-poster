@@ -1,11 +1,14 @@
 // Put all the javascript code here, that you want to execute after page load.
 let filters
 
+// cache for card IDs whose poster is once fetched
+const postersForIds = new Map()
+
 // filter all cards
 function filterAll () {
   const cards = document.getElementsByClassName('NC-Card')
   for (const c of cards) {
-    filterCard(c)
+    filterCard(c).catch(err => console.error(err))
   }
 }
 
@@ -19,12 +22,12 @@ function run (muts) {
   }
 }
 
-// find ids in filters
-function inFilters (ids) {
+// find poster in filters
+function inFilters (poster) {
   for (const f of filters) {
     if (
-      (ids.user !== undefined && ids.user === f.user) ||
-      (ids.chan !== undefined && ids.chan === f.chan)
+      (poster.user !== undefined && poster.user === f.user) ||
+      (poster.chan !== undefined && poster.chan === f.chan)
     ) {
       return true
     }
@@ -33,32 +36,52 @@ function inFilters (ids) {
 }
 
 // add filter effect to the specified card
-function filterCard (card) {
+async function filterCard (card) {
   const id = getId(card)
   if (id === '') return
-  getPoster(id).then((ids) => {
-    if (inFilters(ids)) {
-      // set title of card
-      {
-        const title = card.getElementsByClassName('NC-CardTitle')[0]
-        if (title?.getElementsByClassName('NNFBP-Title').length === 0) {
-          const original = `${title.innerText}`
-          title.innerText = ''
-          const span = document.createElement('span')
-          span.innerText = 'Filtered'
-          span.title = original
-          span.classList.add('NNFBP-Title')
-          title.appendChild(span)
-        }
-      }
 
-      // add effect to thumbnail
-      {
-        const thumb = card.getElementsByClassName('NC-Card-media')[0]
-        thumb?.classList.add('NNFBP-blur')
+  const poster = postersForIds.get(id)
+  if (poster !== undefined) {
+    // poster for the card is already fetched
+    await new Promise((resolve, reject) => {
+      try {
+        applyFilter(poster, card)
+        resolve()
+      } catch (e) {
+        reject(e)
+      }
+    })
+  } else {
+    // fetch poster for the card
+    await getPoster(id).then(poster => {
+      postersForIds.set(id, poster)
+      applyFilter(poster, card)
+    })
+  }
+}
+
+function applyFilter (poster, card) {
+  if (inFilters(poster)) {
+    // set title of card
+    {
+      const title = card.getElementsByClassName('NC-CardTitle')[0]
+      if (title?.getElementsByClassName('NNFBP-Title').length === 0) {
+        const original = `${title.innerText}`
+        title.innerText = ''
+        const span = document.createElement('span')
+        span.innerText = 'Filtered'
+        span.title = original
+        span.classList.add('NNFBP-Title')
+        title.appendChild(span)
       }
     }
-  })
+
+    // add effect to thumbnail
+    {
+      const thumb = card.getElementsByClassName('NC-Card-media')[0]
+      thumb?.classList.add('NNFBP-blur')
+    }
+  }
 }
 
 // get id of the card
@@ -76,18 +99,14 @@ function getId (card) {
 // get poster of the movie
 async function getPoster (id) {
   const uri = `https://ext.nicovideo.jp/api/getthumbinfo/${id}`
-  try {
-    const res = await fetch(uri)
-    const text = await res.text()
-    const xml = new window.DOMParser().parseFromString(text, 'text/xml')
-    const userId = xml.getElementsByTagName('user_id')[0]?.textContent
-    const chanId = xml.getElementsByTagName('ch_id')[0]?.textContent
-    return {
-      user: userId,
-      chan: chanId
-    }
-  } catch (e) {
-    console.log(e)
+  const res = await fetch(uri)
+  const text = await res.text()
+  const xml = new window.DOMParser().parseFromString(text, 'text/xml')
+  const userId = xml.getElementsByTagName('user_id')[0]?.textContent
+  const chanId = xml.getElementsByTagName('ch_id')[0]?.textContent
+  return {
+    user: userId,
+    chan: chanId
   }
 }
 
