@@ -107,12 +107,6 @@ browser.storage.sync
       observer.observe(row, { childList: true })
     }
 
-    // remove ads
-    const adRows = document.getElementsByClassName('RankingMatrixNicoadsRow')
-    for (const row of adRows) {
-      row.remove()
-    }
-
     filterAll()
 
     browser.storage.onChanged.addListener((changes, area) => {
