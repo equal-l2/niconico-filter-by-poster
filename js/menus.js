@@ -1,5 +1,9 @@
 const NNFBP_ADD = 'NNFBP-add'
 
+function showAlert (msg) {
+  browser.tabs.executeScript({ code: `alert(${msg})` })
+}
+
 browser.menus.create({
   id: NNFBP_ADD,
   title: 'Add this to NNFBP filter',
@@ -18,17 +22,20 @@ browser.menus.onClicked.addListener((info, _) => {
             } else {
               filters = []
             }
-            filters.push(filter)
-            utils.uniqFilters(filters)
+            if (filters.some((elem) => filter.user === elem.user && filter.chan === elem.chan)) {
+              showAlert(`Filter was not created: already exists for ${vid}`)
+            } else {
+              filters.push(filter)
 
-            browser.storage.sync.set({
-              filters: filters
-            })
+              browser.storage.sync.set({
+                filters: filters
+              })
 
-            browser.tabs.executeScript({ code: `alert("Created for ${vid}")` })
+              showAlert(`Filter created for ${vid}`)
+            }
           })
         } else {
-          browser.tabs.executeScript({ code: `alert("${err}")` })
+          showAlert(`${err}`)
         }
       })
     })
