@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "niconico-filter-by-poster",
     "description": "filter videos on niconico ranking top by user/channel",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "content_scripts": [
         {
             "matches": [

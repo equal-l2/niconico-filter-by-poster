@@ -1,7 +1,7 @@
 const NNFBP_ADD = 'NNFBP-add'
 
 function showAlert (msg) {
-  browser.tabs.executeScript({ code: `alert(${msg})` })
+  browser.tabs.executeScript({ code: `alert("${msg}")` })
 }
 
 browser.menus.create({
