@@ -28,7 +28,7 @@ browser.menus.onClicked.addListener((info, _) => {
               filters.push(filter)
 
               browser.storage.sync.set({
-                filters: filters
+                filters
               })
 
               showAlert(`Filter created for ${vid}`)
