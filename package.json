@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "fix": "standard --fix"
+    "fix": "standard --fix",
+    "prepare": "husky install"
   },
   "standard": {
     "globals": [
@@ -10,6 +11,11 @@
     ]
   },
   "devDependencies": {
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.0",
     "standard": "^16.0.4"
+  },
+  "lint-staged": {
+    "*.js": "standard --fix"
   }
 }
