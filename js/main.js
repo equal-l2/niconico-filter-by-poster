@@ -1,12 +1,57 @@
 // Put all the javascript code here, that you want to execute after page load.
-let filters
+'use strict'
+
+class Poster {
+  constructor (name, id) {
+    this.name = name
+    this.id = id
+  }
+}
+
+class UserOrChan {
+  #user
+  #chan
+
+  constructor (user, chan) {
+    this.#user = user
+    this.#chan = chan
+  }
+
+  static user (poster) {
+    return new UserOrChan(poster, null)
+  }
+
+  static chan (poster) {
+    return new UserOrChan(null, poster)
+  }
+
+  get value () {
+    if (this.isUser()) {
+      return this.#user
+    } else if (this.isChan()) {
+      return this.#chan
+    } else {
+      return null
+    }
+  }
+
+  isUser () {
+    return this.#user !== null && this.#chan === null
+  }
+
+  isChan () {
+    return this.#user === null && this.#chan !== null
+  }
+}
+
+let filters = []
 
 // cache for card IDs whose poster is once fetched
 const postersForIds = new Map()
 
 // filter all cards
 function filterAll () {
-  const cards = document.getElementsByClassName('NC-Card')
+  const cards = document.querySelectorAll('.NC-Card:not(.NNFBP-Blocked)')
   for (const c of cards) {
     filterCard(c).catch(err => console.error(err))
   }
@@ -26,8 +71,8 @@ function run (muts) {
 function inFilters (poster) {
   for (const f of filters) {
     if (
-      (poster.user !== undefined && poster.user === f.user) ||
-      (poster.chan !== undefined && poster.chan === f.chan)
+      (poster.isUser() && poster.value.id === f.user) ||
+      (poster.isChan() && poster.value.id === f.chan)
     ) {
       return true
     }
@@ -62,25 +107,20 @@ async function filterCard (card) {
 
 function applyFilter (poster, card) {
   if (inFilters(poster)) {
-    // set title of card
+    // set title of card, and add tooltips indicating the original title
     {
       const title = card.getElementsByClassName('NC-CardTitle')[0]
-      if (title?.getElementsByClassName('NNFBP-Title').length === 0) {
-        const original = `${title.innerText}`
-        title.innerText = ''
-        const span = document.createElement('span')
-        span.innerText = 'Filtered'
-        span.title = original
-        span.classList.add('NNFBP-Title')
-        title.appendChild(span)
+
+      const original = `${title.innerText}`
+      title.innerText = 'Filtered'
+      const titleTooltip = `${original}\n(${poster.value.name})`
+
+      for (const a of card.getElementsByTagName('a')) {
+        a.title = titleTooltip
       }
     }
 
-    // add effect to thumbnail
-    {
-      const thumb = card.getElementsByClassName('NC-Card-media')[0]
-      thumb?.classList.add('NNFBP-blur')
-    }
+    card.classList.add('NNFBP-Blocked')
   }
 }
 
@@ -104,9 +144,17 @@ async function getPoster (id) {
   const xml = new window.DOMParser().parseFromString(text, 'text/xml')
   const userId = xml.getElementsByTagName('user_id')[0]?.textContent
   const chanId = xml.getElementsByTagName('ch_id')[0]?.textContent
-  return {
-    user: userId,
-    chan: chanId
+
+  if (userId) {
+    const userNickname = xml.getElementsByTagName('user_nickname')[0]?.textContent
+    const poster = new Poster(userNickname, userId)
+    return UserOrChan.user(poster)
+  } else if (chanId) {
+    const channelName = xml.getElementsByTagName('ch_name')[0]?.textContent
+    const poster = new Poster(channelName, chanId)
+    return UserOrChan.chan(poster)
+  } else {
+    return null
   }
 }
 
@@ -114,9 +162,8 @@ browser.storage.sync
   .get('filters')
   .then((res) => {
     console.log('NNFBP filters loaded')
-    filters = res.filters
-    if (filters === undefined) {
-      filters = []
+    if (res.filters !== undefined) {
+      filters = res.filters
     }
 
     const observer = new MutationObserver(run)
