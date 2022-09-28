@@ -1,5 +1,14 @@
+/**
+  * Generate a filter by retrieving info of the video pointed to by the url
+  * @param {string} url
+  */
 export async function generateFilterFromURL (url) {
+  /**
+    * Tuple of [video id, filter, error]
+    * @type {[?string, ?FilterEntry, any]}
+    */
   const ret = [null, null, null] // [vid, filter, err]
+
   const match = url.match(/(?:sm|so)\d*/)
   if (match?.length === 1) {
     const vid = match[0]
@@ -26,6 +35,9 @@ export async function generateFilterFromURL (url) {
   return ret
 }
 
+/**
+  * @param {FilterEntry[]} filters
+  */
 export function uniqFilters (filters) {
   filters.sort((a, b) => {
     if (a.chan !== undefined) {

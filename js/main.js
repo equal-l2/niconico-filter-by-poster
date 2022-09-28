@@ -1,28 +1,46 @@
 // Put all the javascript code here, that you want to execute after page load.
 'use strict'
 
-class Poster {
+class NameIdPair {
+  /**
+   * @param {?string} name
+   * @param {?string} id
+   */
   constructor (name, id) {
     this.name = name
     this.id = id
   }
 }
 
-class UserOrChan {
+class Poster {
   #user
   #chan
 
+  /**
+   * @param {?NameIdPair} user
+   * @param {?NameIdPair} chan
+   */
   constructor (user, chan) {
     this.#user = user
     this.#chan = chan
   }
 
-  static user (poster) {
-    return new UserOrChan(poster, null)
+  /**
+   * Construct an user object
+   *
+   * @param {NameIdPair} pair
+   */
+  static user (pair) {
+    return new Poster(pair, null)
   }
 
-  static chan (poster) {
-    return new UserOrChan(null, poster)
+  /**
+   * Construct a chan object
+   *
+   * @param {NameIdPair} pair
+   */
+  static chan (pair) {
+    return new Poster(null, pair)
   }
 
   get value () {
@@ -31,6 +49,7 @@ class UserOrChan {
     } else if (this.isChan()) {
       return this.#chan
     } else {
+      // should never happen
       return null
     }
   }
@@ -44,9 +63,22 @@ class UserOrChan {
   }
 }
 
+/**
+ * @typedef FilterEntry
+ * @type {object}
+ * @property {?string} user
+ * @property {?string} chan
+ */
+
+/**
+ * @type FilterEntry[]
+ */
 let filters = []
 
-// cache for card IDs whose poster is once fetched
+/**
+ * Cache for card IDs whose poster is once fetched
+ * @type {Map<string, ?Poster>}
+ */
 const postersForIds = new Map()
 
 // filter all cards
@@ -67,12 +99,16 @@ function run (muts) {
   }
 }
 
-// find poster in filters
+/**
+ * Check if the poster is contained in the filters
+ *
+ * @param {Poster} poster
+ */
 function inFilters (poster) {
   for (const f of filters) {
     if (
-      (poster.isUser() && poster.value.id === f.user) ||
-      (poster.isChan() && poster.value.id === f.chan)
+      (poster.isUser() && poster.value?.id === f.user) ||
+      (poster.isChan() && poster.value?.id === f.chan)
     ) {
       return true
     }
@@ -80,7 +116,10 @@ function inFilters (poster) {
   return false
 }
 
-// add filter effect to the specified card
+/**
+  * Apply filter effect to the specified card
+  * @returns {Promise<void>}
+  */
 async function filterCard (card) {
   const id = getId(card)
   if (id === '') return
@@ -91,7 +130,8 @@ async function filterCard (card) {
     await new Promise((resolve, reject) => {
       try {
         applyFilter(poster, card)
-        resolve()
+        // Produce Promise<void>
+        resolve(undefined)
       } catch (e) {
         reject(e)
       }
@@ -107,7 +147,7 @@ async function filterCard (card) {
 
 function applyFilter (poster, card) {
   if (inFilters(poster)) {
-    // set title of card, and add tooltips indicating the original title
+    // set the title of the card, and add a tooltip indicating the original title
     {
       const title = card.getElementsByClassName('NC-CardTitle')[0]
 
@@ -124,7 +164,11 @@ function applyFilter (poster, card) {
   }
 }
 
-// get id of the card
+/**
+ * Get the id of the video pointed by the card
+ *
+ * @returns {string} the id on success, otherwise an empty string
+ */
 function getId (card) {
   const link = card.getElementsByClassName('NC-Link')[0]
   const matches = link.href.match(/(?:sm|so)\d*/)
@@ -136,7 +180,12 @@ function getId (card) {
   }
 }
 
-// get poster of the movie
+/**
+ * Get the poster of the video
+ *
+ * @param {string} id
+ * @returns {Promise<?Poster>} UserOrChan object on success, otherwise null
+ */
 async function getPoster (id) {
   const uri = `https://ext.nicovideo.jp/api/getthumbinfo/${id}`
   const res = await fetch(uri)
@@ -147,12 +196,12 @@ async function getPoster (id) {
 
   if (userId) {
     const userNickname = xml.getElementsByTagName('user_nickname')[0]?.textContent
-    const poster = new Poster(userNickname, userId)
-    return UserOrChan.user(poster)
+    const poster = new NameIdPair(userNickname, userId)
+    return Poster.user(poster)
   } else if (chanId) {
     const channelName = xml.getElementsByTagName('ch_name')[0]?.textContent
-    const poster = new Poster(channelName, chanId)
-    return UserOrChan.chan(poster)
+    const poster = new NameIdPair(channelName, chanId)
+    return Poster.chan(poster)
   } else {
     return null
   }

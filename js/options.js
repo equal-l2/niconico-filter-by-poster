@@ -28,7 +28,10 @@ import('./utils.js').then(utils => {
     }
   }
 
-  // parse form string into array of filter object
+  /**
+    * Parse form string into array of filter object
+    * @param {string} str
+    */
   function parseFilters (str) {
     const lines = str.split('\n')
     const res = {

@@ -1,5 +1,8 @@
 const NNFBP_ADD = 'NNFBP-add'
 
+/**
+  * @param {any} msg
+  */
 function showAlert (msg) {
   browser.tabs.executeScript({ code: `alert("${msg}")` })
 }
@@ -22,7 +25,7 @@ browser.menus.onClicked.addListener((info, _) => {
             } else {
               filters = []
             }
-            if (filters.some((elem) => filter.user === elem.user && filter.chan === elem.chan)) {
+            if (filters.some((elem) => filter?.user === elem.user && filter?.chan === elem.chan)) {
               showAlert(`Filter was not created: already exists for ${vid}`)
             } else {
               filters.push(filter)
